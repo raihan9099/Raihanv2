@@ -15,7 +15,9 @@ module.exports = {
     longDescription: {
       en: "Convert media to direct download link."
     },
-    guide: "Reply to an image/video/audio/gif with {pn}"
+    guide: {
+      en: "Reply to an image/video/audio/gif with {pn}"
+    }
   },
 
   onStart: async function ({ api, event }) {
@@ -47,11 +49,8 @@ module.exports = {
       const form = new FormData();
       form.append("file", fs.createReadStream(filePath));
 
-<<<<<<< HEAD
-      const res = await axios.post("https://noobs-xyz.onrender.com/v1/upload", form, {
-=======
+      // ✅ Choose one server (I picked "aryan-xy" since that looks final)
       const res = await axios.post("https://aryan-xy.onrender.com/v1/upload", form, {
->>>>>>> 5f826bfa37596c145c0dee848e9aff6fc51060d8
         headers: form.getHeaders(),
         maxContentLength: Infinity,
         maxBodyLength: Infinity
@@ -69,8 +68,4 @@ module.exports = {
       return api.sendMessage("❌ Failed to convert media into a link. Server may be down or the file is too large.", event.threadID, event.messageID);
     }
   }
-<<<<<<< HEAD
 };
-=======
-};
->>>>>>> 5f826bfa37596c145c0dee848e9aff6fc51060d8
