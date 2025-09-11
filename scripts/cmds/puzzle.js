@@ -1,4 +1,4 @@
- const fs = require('fs');
+const fs = require('fs');
 const path = require('path');
 const { createCanvas, loadImage } = require('canvas');
 
@@ -43,7 +43,8 @@ module.exports = {
       global.GoatBot.onReply.set(sentMessage.messageID, {
         commandName: "puzzle",
         uid: senderID,
-        shuffledParts: shuffledParts
+        shuffledParts: shuffledParts,
+        originalParts: originalParts
       });
     } catch (error) {
       console.error("Error in onStart:", error);
@@ -56,7 +57,7 @@ module.exports = {
 
     if (!replyData || replyData.uid !== event.senderID) return;
 
-    const { commandName, uid, shuffledParts } = replyData;
+    const { commandName, uid, shuffledParts, originalParts } = replyData;
     if (commandName !== "puzzle") return;
 
     if (args.length !== 2 || isNaN(parseInt(args[0])) || isNaN(parseInt(args[1]))) {
@@ -71,7 +72,6 @@ module.exports = {
         return message.reply("Invalid part numbers. Please provide numbers between 1 and 8.");
       }
 
-  
       [shuffledParts[part1], shuffledParts[part2]] = [shuffledParts[part2], shuffledParts[part1]];
 
       const swappedImageBuffer = await createNumberedImage(shuffledParts, originalParts[0].canvas.width * 4, originalParts[0].canvas.height * 2);
@@ -79,7 +79,7 @@ module.exports = {
 
       const sentMessage = await message.reply({ attachment: fs.createReadStream(swappedImagePath) });
 
-      if (isPuzzleSolved(shuffledParts)) {
+      if (isPuzzleSolved(shuffledParts, originalParts)) {
         await usersData.set(uid, { money: (await usersData.get(uid)).money + 10000 });
         global.GoatBot.onReply.delete(event.messageReply.messageID);
         return message.reply("Congratulations! You solved the puzzle and earned 10,000 coins.");
@@ -88,7 +88,8 @@ module.exports = {
       global.GoatBot.onReply.set(sentMessage.messageID, {
         commandName: "puzzle",
         uid: uid,
-        shuffledParts: shuffledParts
+        shuffledParts: shuffledParts,
+        originalParts: originalParts
       });
     } catch (error) {
       console.error("Error in onReply:", error);
@@ -107,7 +108,7 @@ async function cropAndShuffleImage(image) {
       const canvas = createCanvas(partWidth, partHeight);
       const ctx = canvas.getContext('2d');
       ctx.drawImage(image, j * partWidth, i * partHeight, partWidth, partHeight, 0, 0, partWidth, partHeight);
-      parts.push({ canvas });
+      parts.push({ canvas, originalIndex: i * 4 + j });
     }
   }
 
@@ -146,5 +147,18 @@ async function createNumberedImage(parts, width, height) {
   return canvas.toBuffer();
 }
 
-function isPuzzleSolved(shuffledParts) {
-  for
+function isPuzzleSolved(shuffledParts, originalParts) {
+  for (let i = 0; i < shuffledParts.length; i++) {
+    if (shuffledParts[i].originalIndex !== originalParts[i].originalIndex) {
+      return false;
+    }
+  }
+  return true;
+}
+
+async function saveImageToCache(buffer) {
+  const filename = `puzzle_${Date.now()}.png`;
+  const filepath = path.join(cacheDir, filename);
+  fs.writeFileSync(filepath, buffer);
+  return filepath;
+    }
